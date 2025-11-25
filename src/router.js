@@ -4,12 +4,12 @@ import { authState } from './authState'
 import Login from './Views/Login.vue' 
 import Shortener from './Views/Shortener.vue' 
 import Home from './Views/Home.vue'
-//import GoogleLogin from './Views/GoogleLogin.vue'
 import UserProfile from './Views/UserProfile.vue'
 import Admin from './Views/Admin.vue'
 import Signup from './Views/Signup.vue'
 import ForgotPassword from './Views/ForgotPassword.vue'
 import ResetPassword from './Views/ResetPassword.vue';
+
 
 const routes = [
     {
@@ -22,11 +22,6 @@ const routes = [
     name: 'Login',
     component: Login
     },
-    //{
-    //path: '/GoogleLogin', 
-    //name: 'GoogleLogin',
-    //component: GoogleLogin
-    //},
     {
     path: '/user/:id', 
     name: 'UserProfile',
@@ -54,10 +49,9 @@ const routes = [
         component: ForgotPassword
     },
     {
-    path: '/reset-password/:token',
-    name: 'ResetPassword',
-    component: ResetPassword,
-    props: true 
+    path: '/reset-password', 
+        name: 'ResetPassword',
+        component: ResetPassword
     }
 ]
 
