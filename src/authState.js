@@ -1,5 +1,5 @@
 import { reactive } from 'vue';
-const BASE_API_URL = "http://localhost:5000/api/User";
+const BASE_API_URL = "https://userservice-latest-p29g.onrender.com/";
 
 
 export const authState = reactive({
