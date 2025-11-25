@@ -33,31 +33,43 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
+// Cài đặt và import axios nếu chưa có: npm install axios
+import axios from 'axios'; 
 
 const email = ref('');
 const isLoading = ref(false);
 const successMessage = ref('');
 const errorMessage = ref('');
 
+const API_BASE_URL = 'https://userservice-latest-p29g.onrender.com/'; // Thay thế bằng URL Backend thực tế
+
 const handleSubmit = async () => {
     isLoading.value = true;
     errorMessage.value = '';
     successMessage.value = '';
 
-    console.log('Password reset request for:', email.value);
-
-    try {//Gọi API Backend để gửi email đặt lại
-        await new Promise(resolve => setTimeout(resolve, 1500)); 
+    try {
+        // Gửi yêu cầu POST đến Endpoint ForgotPassword
+        const response = await axios.post(`${API_BASE_URL}/forgot-password`, {
+            email: email.value
+        });
         
-        successMessage.value = `Password reset link sent to email ${email.value}. Please check your mailbox.`;
-        email.value = ''; // Xóa email sau khi gửi thành công
+        // Xử lý phản hồi thành công từ Backend
+        successMessage.value = response.data.message || `Password reset link sent to email ${email.value}. Please check your mailbox.`;
+        email.value = ''; 
 
-    } catch (err) {
-        errorMessage.value = 'Error sending request. Please try again later..';
-        console.error('API Error:', err);
+    } catch (error) {
+        // Lỗi từ API (4xx, 5xx) hoặc lỗi mạng
+        console.error('API Error:', error);
+        
+        let message = 'Error sending request. Please try again later.';
+        
+        if (error.response && error.response.data && error.response.data.message) {
+            // Lấy thông báo lỗi cụ thể từ Backend (ví dụ: "Email không tồn tại")
+            message = error.response.data.message;
+        }
+
+        errorMessage.value = message;
     } finally {
         isLoading.value = false;
     }
