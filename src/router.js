@@ -4,7 +4,7 @@ import { authState } from './authState'
 import Login from './Views/Login.vue' 
 import Shortener from './Views/Shortener.vue' 
 import Home from './Views/Home.vue'
-import GoogleLogin from './Views/GoogleLogin.vue'
+//import GoogleLogin from './Views/GoogleLogin.vue'
 import UserProfile from './Views/UserProfile.vue'
 import Admin from './Views/Admin.vue'
 import Signup from './Views/Signup.vue'
@@ -22,11 +22,11 @@ const routes = [
     name: 'Login',
     component: Login
     },
-    {
-    path: '/GoogleLogin', 
-    name: 'GoogleLogin',
-    component: GoogleLogin
-    },
+    //{
+    //path: '/GoogleLogin', 
+    //name: 'GoogleLogin',
+    //component: GoogleLogin
+    //},
     {
     path: '/user/:id', 
     name: 'UserProfile',
