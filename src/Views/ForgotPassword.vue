@@ -1,39 +1,46 @@
 <template>
-<div class="login-container">
+  <div class="login-container">
     <div class="login-form-card">
-        <h2 class="ui header">Forget password</h2>
-        <p class="instruction">
-            Enter email to resset password.
-        </p>
-    
-        <form @submit.prevent="handleSubmit">
-            <input type="email" placeholder="Enter your email" required v-model="email"> 
-            
-            <button type="submit" class="btn-primary btn-send" :disabled="isLoading">
-                {{ isLoading ? 'Loading...' : 'send request' }}
-            </button>
-        </form>
-        
-        <div v-if="successMessage" class="success-message">
-            {{ successMessage }}
-        </div>
-
-        <div v-if="errorMessage" class="error-message">
-            {{ errorMessage }}
+      <h2 class="ui header">Quên Mật Khẩu</h2>
+      <p class="instruction">
+        Nhập địa chỉ email của bạn để nhận link đặt lại mật khẩu.
+      </p>
+  
+      <form @submit.prevent="handleSubmit">
+        <div class="input-group">
+            <input 
+                type="email" 
+                placeholder="Nhập email của bạn..." 
+                required 
+                v-model="email"
+                :disabled="isLoading"
+            > 
         </div>
         
-        <div class="divider"></div>
+        <button type="submit" class="btn-primary btn-send" :disabled="isLoading">
+          {{ isLoading ? 'Đang gửi...' : 'Gửi yêu cầu' }}
+        </button>
+      </form>
+      
+      <div v-if="successMessage" class="success-message">
+        {{ successMessage }}
+      </div>
 
-        <router-link to="/login" class="back-link">
-            return login
-        </router-link>
+      <div v-if="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </div>
+      
+      <div class="divider"></div>
+
+      <router-link to="/login" class="back-link">
+        ← Quay lại Đăng nhập
+      </router-link>
     </div>
-</div>
+  </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-// Cài đặt và import axios nếu chưa có: npm install axios
 import axios from 'axios'; 
 
 const email = ref('');
@@ -41,37 +48,53 @@ const isLoading = ref(false);
 const successMessage = ref('');
 const errorMessage = ref('');
 
-const API_BASE_URL = 'https://userservice-latest-p29g.onrender.com'; // Thay thế bằng URL Backend thực tế
+// URL Backend của bạn (Đã bỏ dấu gạch chéo ở cuối để tránh lỗi //)
+const API_BASE_URL = 'https://userservice-latest-p29g.onrender.com'; 
 
 const handleSubmit = async () => {
+  // 1. Reset trạng thái
     isLoading.value = true;
     errorMessage.value = '';
     successMessage.value = '';
 
     try {
-        // Gửi yêu cầu POST đến Endpoint ForgotPassword
-        const response = await axios.post(`${API_BASE_URL}/forgot-password`, {
-            Email: email.value
-        });
-        
-        // Xử lý phản hồi thành công từ Backend
-        successMessage.value = response.data.message || `Password reset link sent to email ${email.value}. Please check your mailbox.`;
-        email.value = ''; 
-
+    // 2. Gửi yêu cầu POST
+    // Lưu ý: dùng .trim() để xóa khoảng trắng thừa nếu copy/paste
+    const response = await axios.post(`${API_BASE_URL}/forgot-password`, {
+    email: email.value.trim() 
+    });
+    
+    // 3. Xử lý thành công
+    // Nếu backend trả về JSON { message: "..." } thì lấy, không thì tự điền
+    successMessage.value = response.data.message || `Link reset đã được gửi tới ${email.value}. Hãy kiểm tra hộp thư!`;
+    
     } catch (error) {
-        // Lỗi từ API (4xx, 5xx) hoặc lỗi mạng
-        console.error('API Error:', error);
-        
-        let message = 'Error sending request. Please try again later.';
-        
-        if (error.response && error.response.data && error.response.data.message) {
-            // Lấy thông báo lỗi cụ thể từ Backend (ví dụ: "Email không tồn tại")
+    console.error('API Error:', error);
+    
+    // 4. Xử lý lỗi (Quan trọng)
+    let message = 'Có lỗi xảy ra. Vui lòng thử lại sau.';
+    
+    if (error.response && error.response.data) {
+        // Trường hợp Backend trả về chuỗi trần (ví dụ: "User not found.")
+        if (typeof error.response.data === 'string') {
+            message = error.response.data;
+        } 
+        // Trường hợp Backend trả về JSON object (ví dụ: { message: "Lỗi rồi" })
+        else if (error.response.data.message) {
             message = error.response.data.message;
         }
+    }
 
-        errorMessage.value = message;
+    // Dịch lỗi sang tiếng Việt cho thân thiện
+    if (message.includes("User not found")) {
+        message = "Email này chưa được đăng ký trong hệ thống.";
+    } else if (message.includes("Google account")) {
+        message = "Tài khoản này đăng ký bằng Google, không thể reset mật khẩu.";
+    }
+
+    errorMessage.value = message;
     } finally {
-        isLoading.value = false;
+    isLoading.value = false;
     }
 };
 </script>
