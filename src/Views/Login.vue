@@ -1,54 +1,62 @@
 <template>
 <div class="login-container">
-    <div class="login-form-card">
-    
-    <form @submit.prevent="handleLogin">
-        <input type="text" placeholder="Email " required v-model="email"> 
-        
-        <input type="password" placeholder="Password" required v-model="password"> 
-        
-        <button type="submit" class="btn-primary">Sign in</button>
-    </form>
-    <div class="card-footer">
-            <p>
-        <span class="text-muted">Don't have account? </span>
-        <router-link to="/signup" class="footer-link">
-            Create new account
-        </router-link>
-    </p>
-            <p>
-                <router-link to="/forgot-password" class="footer-link">Forget password?</router-link>
-            </p>
-        </div>
+    <p v-if="googleError" style="color: red; text-align: center; font-weight: bold;">{{ googleError }}</p>
+
+    <div class="login-form-card">
+        
+                <form @submit.prevent="handleLogin">
+            <input type="text" placeholder="Email " required v-model="email"> 
+            <input type="password" placeholder="Password" required v-model="password"> 
+            <button type="submit" class="btn-primary">Sign in</button>
+        </form>
+        
         <div class="divider"></div>
-<button @click="loginWithGoogle" class="btn-google">
-    <i class="google icon"></i> Sign in with google
-    </button>
-    
-    </div>
-    
-    
+        
+        <div id="google-login-button-gsi" style="display: flex; justify-content: center; margin: 15px 0;">
+            </div>
+
+        <div class="card-footer">
+            <p>
+                <span class="text-muted">Don't have account? </span>
+                <router-link to="/signup" class="footer-link">Create new account</router-link>
+            </p>
+            <p>
+                <router-link to="/forgot-password" class="footer-link">Forget password?</router-link>
+            </p>
+        </div>
+    </div>
 </div>
 </template>
 
 <script setup> 
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { loginUser } from '../authState'; 
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
+import { loginUser } from '../authState'; // Giữ lại logic đăng nhập cũ
 import Swal from 'sweetalert2';
 
-const router = useRouter()
+const router = useRouter();
 
-const email = ref('')
-const password = ref('')
+const email = ref('');
+const password = ref('');
+const googleError = ref(''); // Dùng để hiển thị lỗi Google Login
+
+// --- CẤU HÌNH GOOGLE ---
+// 1. Thay thế bằng ID thật của bạn
+const CLIENT_ID = "YOUR_CLIENT_ID.apps.googleusercontent.com"; 
+
+// 2. URL Backend trên Render
+const BACKEND_URL = "https://userservice-latest-p29g.onrender.com/api/auth/google-login";
+// --- HẾT CẤU HÌNH ---
 
 
+// Logic Đăng nhập truyền thống (Giữ nguyên)
 const handleLogin = () => {
-    const result = loginUser(email.value, password.value);// gọi hàm đăng nhập
+    const result = loginUser(email.value, password.value);
 
     if (result.success) {
         console.log('Login success');
-        router.push('/'); // chuyển về trang chủ
+        router.push('/');
     } else {
         Swal.fire({
             icon: 'error',
@@ -58,11 +66,73 @@ const handleLogin = () => {
     }
 }
 
-const loginWithGoogle = () => {
-    console.log('Redirecting to Google Login page...')
-    router.push('/Google-login') 
-}
+// Logic Google Login (Mới, tích hợp GSI)
+const handleCredentialResponse = async (response) => {
+    googleError.value = '';
+    try {
+        console.log("Google ID Token:", response.credential);
 
+        // Gửi token về Backend
+        const res = await axios.post(BACKEND_URL, {
+            IdToken: response.credential 
+        });
+
+        // Thành công!
+        console.log("Server trả về:", res.data);
+        Swal.fire({
+            icon: 'success',
+            title: 'Đăng nhập thành công',
+            text: res.data.message,
+        });
+        
+        // LƯU TOKEN và CHUYỂN TRANG
+        localStorage.setItem("token", res.data.token);
+        router.push('/'); // <-- CHUYỂN HƯỚNG KHI THÀNH CÔNG
+
+    } catch (err) {
+        console.error(err);
+        googleError.value = "Lỗi xác thực với Server!";
+        Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: 'Xác thực Google thất bại. Vui lòng thử lại.',
+        });
+    }
+};
+
+onMounted(() => {
+    // 1. Load Script Google động (nếu chưa có)
+    if (!document.getElementById('gsi-script')) {
+        const script = document.createElement('script');
+        script.src = "https://accounts.google.com/gsi/client";
+        script.async = true;
+        script.defer = true;
+        script.id = 'gsi-script';
+        document.head.appendChild(script);
+    }
+    
+    // 2. Sau khi script tải, khởi tạo và vẽ nút
+    const initGoogleLogin = () => {
+        if (window.google) {
+            window.google.accounts.id.initialize({
+                client_id: CLIENT_ID,
+                callback: handleCredentialResponse
+            });
+
+            // Hiển thị nút bấm
+            window.google.accounts.id.renderButton(
+                document.getElementById("google-login-button-gsi"),
+                { theme: "outline", size: "large", width: '100%' } // Dùng width: '100%' để nút đẹp hơn
+            );
+        } else {
+            // Thử lại sau 100ms nếu window.google chưa sẵn sàng (xử lý race condition)
+            setTimeout(initGoogleLogin, 100);
+        }
+    };
+    
+    // Bắt đầu khởi tạo
+    initGoogleLogin();
+});
 </script>
 
 <style>
