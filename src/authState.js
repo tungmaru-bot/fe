@@ -1,5 +1,6 @@
 import { reactive } from 'vue';
 const BASE_API_URL = "https://userservice-latest-p29g.onrender.com/";
+import { ref, watchEffect } from 'vue';
 
 
 export const authState = reactive({
@@ -28,8 +29,14 @@ const initDatabase = () => {
 initDatabase();
 
 export const checkSession = () => {
+    const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
+    if (savedToken) { // Nếu có Token JWT (Đăng nhập Google)
+        // Đây là chỗ bạn có thể decode JWT để lấy thông tin user nếu cần
+        authState.isLoggedIn = true;
+        // Tạm thời, ta chỉ xét isLoggedIn
+        
+    } else if (savedUser) { // Nếu có User (Đăng nhập Email/Pass)
         const user = JSON.parse(savedUser);
         authState.isLoggedIn = true;
         authState.currentUser = user;
@@ -56,6 +63,7 @@ export const loginUser = (email, password) => {
         authState.currentUser = user;
         authState.isAdmin = user.role === 'admin';
         localStorage.setItem('currentUser', JSON.stringify(user));
+        localStorage.removeItem('token'); // XÓA TOKEN GOOGLE/JWT KHI ĐĂNG NHẬP PASS
         return { success: true, user };
     } else {
         return { success: false, message: 'Wrong email or password.' };
@@ -66,7 +74,8 @@ export const handleLogout = () => {
     authState.isLoggedIn = false;
     authState.currentUser = null;
     authState.isAdmin = false;
-    localStorage.removeItem('currentUser');
+    localStorage.removeItem('currentUser'); // Dùng cho Email/Pass
+    localStorage.removeItem('token'); // Dùng cho Google/JWT
 };
 
 
@@ -170,3 +179,38 @@ export const checkEmailExists = (email) => {
     const users = getAllUsers();
     return users.some(u => u.email === email);
 }
+
+// 1. Tạo biến Reactive để lưu trạng thái đăng nhập
+export const isAuthenticated = ref(false);
+
+// 2. Tạo hàm kiểm tra Token trong LocalStorage
+function checkAuthStatus() {
+    // Trạng thái được xác định bằng việc có Token trong Local Storage hay không
+    isAuthenticated.value = !!localStorage.getItem('token');
+}
+
+// 3. Hàm đăng nhập (Được gọi sau khi login thành công)
+export function setAuthToken(token, userPayload = null) { // Thêm userPayload tùy chọn
+    if (token) {
+        localStorage.setItem('token', token);
+        localStorage.removeItem('currentUser'); // XÓA USER PASS KHI ĐĂNG NHẬP GOOGLE
+        
+        // Cập nhật trạng thái bằng đối tượng authState
+        authState.isLoggedIn = true;
+        authState.currentUser = userPayload; 
+        // Logic Admin có thể cần phải decode token để kiểm tra role
+        // authState.isAdmin = (userPayload && userPayload.role === 'admin'); 
+    }
+}
+
+// 4. Hàm đăng xuất (Logout)
+export function logout() {
+    localStorage.removeItem('token');
+    isAuthenticated.value = false;
+    // Tùy chọn: Chuyển hướng người dùng về trang Login
+    // (Nếu bạn dùng router ở đây, bạn sẽ cần truyền router vào hàm này)
+}
+
+// 5. Khởi tạo trạng thái khi ứng dụng load lần đầu
+checkAuthStatus();
+indow.addEventListener('storage', checkAuthStatus);

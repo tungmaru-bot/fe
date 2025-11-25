@@ -28,11 +28,12 @@
 </div>
 </template>
 
-<script setup> 
+<script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
-import { loginUser } from '../authState'; // Giữ lại logic đăng nhập cũ
+// Đảm bảo import setAuthToken từ thư mục cha (..) hoặc đường dẫn tương đối chính xác.
+import { loginUser, setAuthToken } from '../authState'; 
 import Swal from 'sweetalert2';
 
 const router = useRouter();
@@ -42,10 +43,7 @@ const password = ref('');
 const googleError = ref(''); // Dùng để hiển thị lỗi Google Login
 
 // --- CẤU HÌNH GOOGLE ---
-// 1. Thay thế bằng ID thật của bạn
 const CLIENT_ID = "317102899110-g5bh9j2tf10uihmb7qkd0otpc8or7h7k.apps.googleusercontent.com"; 
-
-// 2. URL Backend trên Render
 const BACKEND_URL = "https://userservice-latest-p29g.onrender.com/api/auth/google-login";
 // --- HẾT CẤU HÌNH ---
 
@@ -66,15 +64,15 @@ const handleLogin = () => {
     }
 }
 
-// Logic Google Login (Mới, tích hợp GSI)
+// Logic Google Login (ĐÃ SỬA: Dùng setAuthToken)
 const handleCredentialResponse = async (response) => {
-    googleError.value = '';
+    googleError.value = '';
     try {
         console.log("Google ID Token:", response.credential);
 
         // Gửi token về Backend
         const res = await axios.post(BACKEND_URL, {
-            IdToken: response.credential 
+            IdToken: response.credential
         });
 
         // Thành công!
@@ -85,8 +83,9 @@ const handleCredentialResponse = async (response) => {
             text: res.data.message,
         });
         
-        // LƯU TOKEN và CHUYỂN TRANG
-        localStorage.setItem("token", res.data.token);
+        // *** DÒNG ĐÃ SỬA: GỌI HÀM setAuthToken để LƯU VÀ CẬP NHẬT TRẠNG THÁI REACTIVE ***
+        setAuthToken(res.data.token);
+        
         router.push('/'); // <-- CHUYỂN HƯỚNG KHI THÀNH CÔNG
 
     } catch (err) {
