@@ -1,99 +1,69 @@
 <template>
-  <div class="google-auth-container">
-    <h2>Đăng nhập bằng Google</h2>
-    <p v-if="loading">Đang xác thực...</p>
-    <p v-if="error" class="error-message">{{ error }}</p>
-    
-    <button @click="startGoogleLogin" :disabled="loading" class="google-button">
-      Đăng nhập bằng Google
-    </button>
+  <div class="login-wrapper">
+    <h2>Đăng nhập hệ thống</h2>
+    <div id="google-btn"></div>
+    <p v-if="error" style="color: red">{{ error }}</p>
   </div>
 </template>
 
-<script>
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; 
-const REDIRECT_URI = encodeURIComponent('http://localhost:8080/auth/callback'); // Phải khớp với Authorized redirect URIs
-const SCOPE = encodeURIComponent('openid profile email'); 
+<script setup>
+import { onMounted, ref } from 'vue';
+import axios from 'axios';
 
-// URL để bắt đầu Implicit Grant Flow
-const GOOGLE_AUTH_URL = 
-  `https://accounts.google.com/o/oauth2/v2/auth?` +
-  `response_type=token` + // <--- Yêu cầu Access Token trực tiếp (Implicit Flow)
-  `&client_id=${GOOGLE_CLIENT_ID}` +
-  `&scope=${SCOPE}` +
-  `&redirect_uri=${REDIRECT_URI}` +
-  `&prompt=select_account`;
+// 1. Điền Client ID của bạn vào đây
+const CLIENT_ID = "YOUR_CLIENT_ID.apps.googleusercontent.com"; 
 
-export default {
-  name: 'GoogleAuth',
-  data() {
-    return {
-      loading: false,
-      error: null,
-    };
-  },
-  methods: {
-    startGoogleLogin() {// Chuyển hướng người dùng đến Google
-      window.location.href = GOOGLE_AUTH_URL;
-    },
-    // Hàm gửi Access Token đến Service 3 (Backend Docker)
-    async sendTokenToBackend(accessToken) {
-      this.loading = true;
-      this.error = null;
-      // *** URL của Service 3 đang chạy trong Docker ***
-      const SERVICE_3_API = 'http://localhost:5001/api/auth/google-implicit-login'; 
+// 2. URL Backend trên Render
+const BACKEND_URL = "https://userservice-latest-p29g.onrender.com/api/auth/google-login";
 
-      try {
-        const response = await fetch(SERVICE_3_API, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ accessToken: accessToken }),// Gửi Access Token nhận được từ Google
-        });
+const error = ref("");
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Xác thực backend thất bại');
-        }
+onMounted(() => {
+  // Load thư viện Google
+  const script = document.createElement('script');
+  script.src = "https://accounts.google.com/gsi/client";
+  script.async = true;
+  script.defer = true;
+  
+  script.onload = () => {
+    if (window.google) {
+      // Khởi tạo
+      window.google.accounts.id.initialize({
+        client_id: CLIENT_ID,
+        callback: handleCredentialResponse
+      });
 
-        const data = await response.json();
-        // Backend đã xác thực Access Token và cấp JWT Token ứng dụng
-        localStorage.setItem('app-token', data.appToken);
-        
-        this.$router.push('/'); // Chuyển hướng đến trang chính
-        
-      } catch (e) {
-        this.error = `Lỗi: ${e.message}. Vui lòng thử lại.`;
-        console.error("Backend Auth Error:", e);
-      } finally {
-        this.loading = false;
-      }
-    },
-    // Hàm xử lý URL fragment sau khi Google chuyển hướng về
-    handleAuthCallback() {
-      const hash = window.location.hash.substring(1);// Đọc URL fragment
-      const params = new URLSearchParams(hash.replace(/&/g, '\n'));
-      
-      const accessToken = params.get('access_token');
-      const error = params.get('error');
-
-      if (error) {
-        this.error = `Google từ chối đăng nhập: ${error}`;
-        this.$router.replace(this.$route.path);// Xóa fragment khỏi URL
-        return;
-      }
-
-      if (accessToken) {
-        this.sendTokenToBackend(accessToken);// Có Access Token, gửi đến backend
-        this.$router.replace(this.$route.path); // Xóa Access Token khỏi URL
-      }
+      // Hiển thị nút bấm
+      window.google.accounts.id.renderButton(
+        document.getElementById("google-btn"),
+        { theme: "outline", size: "large", width: 250 } 
+      );
     }
-  },
-  mounted() {// Gọi hàm này khi component được mount (để xử lý callback từ Google)
-    if (window.location.hash.includes('access_token')) {
-      this.handleAuthCallback();
-    }
+  };
+  document.head.appendChild(script);
+});
+
+// Hàm xử lý khi người dùng login thành công
+const handleCredentialResponse = async (response) => {
+  try {
+    console.log("Google ID Token:", response.credential);
+
+    // Gửi token về Backend
+    const res = await axios.post(BACKEND_URL, {
+      IdToken: response.credential // Backend C# yêu cầu trường này
+    });
+
+    // Thành công!
+    console.log("Server trả về:", res.data);
+    alert("Đăng nhập thành công: " + res.data.message);
+    
+    // Lưu token và chuyển trang
+    localStorage.setItem("token", res.data.token);
+    // router.push('/'); // Uncomment dòng này nếu muốn chuyển trang
+
+  } catch (err) {
+    console.error(err);
+    error.value = "Lỗi xác thực với Server!";
   }
 };
 </script>
