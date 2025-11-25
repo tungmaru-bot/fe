@@ -84,7 +84,7 @@ const handleCredentialResponse = async (response) => {
         });
         
         // *** DÒNG ĐÃ SỬA: GỌI HÀM setAuthToken để LƯU VÀ CẬP NHẬT TRẠNG THÁI REACTIVE ***
-        setAuthToken(res.data.token, res.data.user);
+        setAuthToken(res.data.token, res.data);
         
         router.push('/'); // <-- CHUYỂN HƯỚNG KHI THÀNH CÔNG
 
