@@ -43,7 +43,7 @@ const googleError = ref(''); // Dùng để hiển thị lỗi Google Login
 
 // --- CẤU HÌNH GOOGLE ---
 // 1. Thay thế bằng ID thật của bạn
-const CLIENT_ID = "YOUR_CLIENT_ID.apps.googleusercontent.com"; 
+const CLIENT_ID = "317102899110-g5bh9j2tf10uihmb7qkd0otpc8or7h7k.apps.googleusercontent.com"; 
 
 // 2. URL Backend trên Render
 const BACKEND_URL = "https://userservice-latest-p29g.onrender.com/api/auth/google-login";
