@@ -110,7 +110,7 @@ const handleSubmit = async () => {
 
         if (response.ok) {
             // API trả về thành công
-            shortenedUrl.value = data.shortUrl; // Giả định API trả về { shortUrl: "..." }
+            shortenedUrl.value = data.shortLink; // Giả định API trả về { shortUrl: "..." }
 
             // 3. Lưu vào LocalStorage (Database giả) và History
             addLink(longUrl.value, shortenedUrl.value, userId);
