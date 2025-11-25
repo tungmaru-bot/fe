@@ -65,7 +65,7 @@ import { ref } from 'vue';
 import { authState, addLink } from '../authState'; 
 import Swal from 'sweetalert2';
 
-const API_URL = "https://shorten-url-latest.onrender.com/api/shorten";
+const API_URL = "https://shorten-url-latest.onrender.com/api/shortener/shorten";
 
 const longUrl = ref('');
 const shortenedUrl = ref('');
