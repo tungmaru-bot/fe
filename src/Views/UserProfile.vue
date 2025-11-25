@@ -136,9 +136,20 @@ import Swal from 'sweetalert2';
 const router = useRouter(); 
 
 // Dùng Optional Chaining (?) để tránh lỗi nếu currentUser là null
-const userName = computed(() => authState.currentUser?.name || 'Guest');
-const userEmail = computed(() => authState.currentUser?.email || 'No Email');
+const userEmail = computed(() => {
+    return authState.currentUser?.email || 'No Email';
+});
 
+// Tính toán Username: Lấy phần trước @ của email
+const userName = computed(() => {
+    // Nếu có email, cắt lấy phần trước @
+    if (authState.currentUser?.email) {
+        const email = authState.currentUser.email;
+        return email.split('@')[0]; // Lấy phần tử đầu tiên sau khi tách chuỗi
+    }
+    // Nếu không có email thì fallback về tên hoặc Guest
+    return authState.currentUser?.name || 'Guest';
+});
 const linkHistory = ref([]);
 const ITEMS_PER_PAGE = 5;
 const currentPage = ref(1);
@@ -285,6 +296,7 @@ const handleChangePassword = async () => {
         passwordError.value = true;
         return;
     }
+    
     isChangingPassword.value = true;
     await new Promise(r => setTimeout(r, 800));
     passwordMessage.value = 'Password changed successfully !';
