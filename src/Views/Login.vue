@@ -60,7 +60,7 @@ const handleLogin = () => {
 
 const loginWithGoogle = () => {
     console.log('Redirecting to Google Login page...')
-    router.push('/google-login') 
+    router.push('/Google-login') 
 }
 
 </script>
