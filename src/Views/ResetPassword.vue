@@ -80,11 +80,15 @@ const API_URL = 'https://userservice-latest-p29g.onrender.com/api/Auth/reset-pas
 
 // Lấy Token từ URL ngay khi trang web tải xong
 onMounted(() => {
-  // URL dạng: /reset-password?token=ABCXYZ...
-  token.value = route.query.token;
+  // Lấy token từ URL
+  let rawToken = route.query.token;
 
-  if (!token.value) {
-    errorMessage.value = "Lỗi: Không tìm thấy Token xác thực. Vui lòng kiểm tra lại link trong email.";
+  if (rawToken) {
+    // FIX QUAN TRỌNG: Nếu URL biến dấu + thành dấu cách, ta phải đổi lại thành dấu +
+    // Vì token mã hóa base64/hex thường không có dấu cách.
+    token.value = rawToken.replace(/ /g, "+");
+  } else {
+    errorMessage.value = "Lỗi: Không tìm thấy Token.";
   }
 });
 
@@ -109,7 +113,10 @@ const handleResetPassword = async () => {
     // Payload phải khớp với DTO trong C# (ResetPasswordRequestDto)
     const payload = {
       token: token.value,
-      newPassword: newPassword.value // Code cũ bạn gửi 'password' là sai, C# chờ 'newPassword'
+      // Gửi cả 2 trường hợp để dù Backend tên là gì cũng nhận được
+      newPassword: newPassword.value, 
+      password: newPassword.value,
+      confirmPassword: newPassword.value
     };
 
     const response = await axios.post(API_URL, payload);
