@@ -41,7 +41,7 @@ const isLoading = ref(false);
 const successMessage = ref('');
 const errorMessage = ref('');
 
-const API_BASE_URL = 'https://userservice-latest-p29g.onrender.com/'; // Thay thế bằng URL Backend thực tế
+const API_BASE_URL = 'https://userservice-latest-p29g.onrender.com'; // Thay thế bằng URL Backend thực tế
 
 const handleSubmit = async () => {
     isLoading.value = true;
