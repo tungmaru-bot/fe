@@ -190,20 +190,27 @@ function checkAuthStatus() {
 }
 
 // 3. Hàm đăng nhập (Được gọi sau khi login thành công)
-export function setAuthToken(token, userData) { // Thêm userPayload tùy chọn
+export function setAuthToken(token, userData) { 
     if (token) {
         localStorage.setItem('token', token);
-        localStorage.removeItem('currentUser'); // XÓA USER PASS KHI ĐĂNG NHẬP GOOGLE
+        localStorage.removeItem('currentUser'); 
+
         authState.isLoggedIn = true;
-        // Cập nhật trạng thái bằng đối tượng authState
-        // CẬP NHẬT THÔNG TIN USER (BƯỚC QUAN TRỌNG)
+        
         if (userData) {
-            // LƯU VÀO STATE REACTIVE
-            authState.currentUser = userData; 
-            authState.isAdmin = userData.role === 'admin'; 
+            // Chuẩn hóa cấu trúc dữ liệu user để khớp với User Profile
+            const userProfileData = {
+                id: userData.id || null, 
+                name: userData.name || userData.userName || 'Unknown User', // Thêm fallback
+                email: userData.email || userData.Email || 'No Email',      // Thêm fallback
+                role: userData.role || 'user'
+            };
             
-            // LƯU VÀO LOCAL STORAGE ĐỂ COMPONENT USER PROFILE ĐỌC VÀ LƯU TRỮ LÂU DÀI
-            localStorage.setItem('currentUser', JSON.stringify(userData));
+            authState.currentUser = userProfileData; 
+            authState.isAdmin = userProfileData.role === 'admin'; 
+            
+            // LƯU DỮ LIỆU CHUẨN HÓA
+            localStorage.setItem('currentUser', JSON.stringify(userProfileData));
         }
     }
 }
