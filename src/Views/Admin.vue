@@ -19,14 +19,6 @@
                     <td>{{ user.name }}</td>
                     <td>{{ user.email }}</td>
                     <td>
-                        <select 
-                            class="ui dropdown role-select" 
-                            :value="user.role" 
-                            @change="handleChangeRole(user, $event)"
-                        >
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                        </select>
                     </td>
                     <td>
                         <button 
@@ -97,7 +89,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'; 
-import { getAllUsers, getAllLinks, deleteUser, deleteLinkFromDB, changeUserRole } from '../authState';
+import { getAllUsers, deleteUser  } from '../authState';
 import Swal from 'sweetalert2';
 
 const activeTab = ref('users');
@@ -134,30 +126,6 @@ onMounted(() => {
 });
 
 
-const handleChangeRole = (user, event) => {
-    const newRole = event.target.value;
-    const oldRole = user.role;
-
-    Swal.fire({
-        title: 'Change permissions?',
-        text: `Change permissions from ${oldRole} to ${newRole}?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'comfirm'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            const success = changeUserRole(user.id, newRole);
-            if (success) {
-                loadData();
-                Swal.fire('success', 'Permissions updated.', 'success');
-            } else {
-                loadData(); 
-            }
-        } else {
-            loadData();     
-        }
-    });
-};
 
 const handleDeleteUser = (userId) => {
     Swal.fire({

@@ -1,30 +1,29 @@
 <template>
 <div class="login-container">
     <p v-if="googleError" style="color: red; text-align: center; font-weight: bold;">{{ googleError }}</p>
-
-    <div class="login-form-card">
-        
-                <form @submit.prevent="handleLogin">
-            <input type="text" placeholder="Email " required v-model="email"> 
-            <input type="password" placeholder="Password" required v-model="password"> 
-            <button type="submit" class="btn-primary">Sign in</button>
-        </form>
-        
+        <div class="login-form-card">
+    
+            <form @submit.prevent="handleLogin">
+            <input type="text" placeholder="Email " required v-model="email"> 
+            <input type="password" placeholder="Password" required v-model="password"> 
+            <button type="submit" class="btn-primary">Sign in</button>
+        </form>
+    
         <div class="divider"></div>
         
         <div id="google-login-button-gsi" style="display: flex; justify-content: center; margin: 15px 0;">
             </div>
 
-        <div class="card-footer">
-            <p>
-                <span class="text-muted">Don't have account? </span>
-                <router-link to="/signup" class="footer-link">Create new account</router-link>
-            </p>
-            <p>
-                <router-link to="/forgot-password" class="footer-link">Forget password?</router-link>
-            </p>
-        </div>
-    </div>
+        <div class="card-footer">
+            <p>
+                <span class="text-muted">Don't have account? </span>
+                <router-link to="/signup" class="footer-link">Create new account</router-link>
+            </p>
+            <p>
+            <router-link to="/forgot-password" class="footer-link">Forget password?</router-link>
+            </p>
+        </div>
+    </div>
 </div>
 </template>
 
@@ -48,7 +47,7 @@ const BACKEND_URL = "https://userservice-latest-p29g.onrender.com/api/auth/googl
 // --- HẾT CẤU HÌNH ---
 
 
-// Logic Đăng nhập truyền thống (Giữ nguyên)
+// Logic Đăng nhập truyền thống 
 const handleLogin = () => {
     const result = loginUser(email.value, password.value);
 
@@ -64,7 +63,7 @@ const handleLogin = () => {
     }
 }
 
-// Logic Google Login (ĐÃ SỬA: Dùng setAuthToken)
+// Logic Google Login 
 const handleCredentialResponse = async (response) => {
     googleError.value = '';
     try {
@@ -83,7 +82,7 @@ const handleCredentialResponse = async (response) => {
             text: res.data.message,
         });
         
-        // *** DÒNG ĐÃ SỬA: GỌI HÀM setAuthToken để LƯU VÀ CẬP NHẬT TRẠNG THÁI REACTIVE ***
+        
         setAuthToken(res.data.token, res.data);
         
         router.push('/'); // <-- CHUYỂN HƯỚNG KHI THÀNH CÔNG
@@ -100,7 +99,7 @@ const handleCredentialResponse = async (response) => {
 };
 
 onMounted(() => {
-    // 1. Load Script Google động (nếu chưa có)
+    // 1. Load Script Google động
     if (!document.getElementById('gsi-script')) {
         const script = document.createElement('script');
         script.src = "https://accounts.google.com/gsi/client";

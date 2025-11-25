@@ -76,10 +76,10 @@ const linkHistory = ref([]);
 
 const addToHistory = (long, short) => {
     const newId = Date.now(); 
-    linkHistory.value.unshift({ id: newId, long: long, short: short });
+    linkHistory.value.unshift({ id: newId, long: long, short: short });// thêm link ms vào đầu bảng thay vì cuối bảng
 };
 
-const handleSubmit = async () => {
+const handleSubmit = async () => {// reset trạng thái trc kh bắt đầu
     error.value = '';
     shortenedUrl.value = '';
     isLoading.value = true;
@@ -91,7 +91,7 @@ const handleSubmit = async () => {
         return;
     }
 
-    try {
+    try {//lấy user id 
         const userId = authState.currentUser ? authState.currentUser.id : 'guest';
 
         // GỌI API THỰC TẾ
@@ -99,7 +99,7 @@ const handleSubmit = async () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            },
+            },// Chuyển đổi object Javascript thành chuỗi JSON để gửi đi
             body: JSON.stringify({
                 OriginalUrl: longUrl.value,
                 userId: userId
@@ -110,8 +110,7 @@ const handleSubmit = async () => {
 
         if (response.ok) {
             // API trả về thành công
-            shortenedUrl.value = data.shortLink; // Giả định API trả về { shortUrl: "..." }
-
+            shortenedUrl.value = data.shortLink; 
             // 3. Lưu vào LocalStorage (Database giả) và History
             addLink(longUrl.value, shortenedUrl.value, userId);
             addToHistory(longUrl.value, shortenedUrl.value);

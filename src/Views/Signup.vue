@@ -65,7 +65,7 @@ const isValidEmail = (email) => {
 
 const handleSignup = () => {
 
-    if (name.value.length < 4 || name.value.length > 16) {
+    if (name.value.length < 4 || name.value.length > 16) {// giới hạn độ dài username
         Swal.fire({
             icon: 'warning',
             title: 'Invalid name',
@@ -74,7 +74,7 @@ const handleSignup = () => {
         return;
     }
 
-    if (password.value.length < 6 || password.value.length > 20) {
+    if (password.value.length < 6 || password.value.length > 20) { //giớ hạn độ dài pw
         Swal.fire({
             icon: 'warning',
             title: 'Weak password',
