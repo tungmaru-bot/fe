@@ -197,20 +197,31 @@ export function setAuthToken(token, userData) {
 
         authState.isLoggedIn = true;
         
-        if (userData) {
-            // Chuẩn hóa cấu trúc dữ liệu user để khớp với User Profile
+        if (userData && userData.email) { // CHỈ THỰC HIỆN KHI CÓ EMAIL
+            const emailFull = userData.email;
+            
+            // 1. Tách chuỗi email
+            // Lấy phần trước dấu @. Nếu không tìm thấy @, dùng email đầy đủ.
+            const usernameFromEmail = emailFull.substring(0, emailFull.indexOf('@')) || emailFull;
+            
+            // 2. Chuẩn hóa cấu trúc dữ liệu user mới
             const userProfileData = {
                 id: userData.id || null, 
-                name: userData.name || userData.userName || 'Unknown User', // Thêm fallback
-                email: userData.email || userData.Email || 'No Email',      // Thêm fallback
+                // GÁN USERNAME LÀ PHẦN TRƯỚC DẤU @
+                name: usernameFromEmail, 
+                // GÁN EMAIL LÀ EMAIL ĐẦY ĐỦ
+                email: emailFull,      
                 role: userData.role || 'user'
             };
             
             authState.currentUser = userProfileData; 
             authState.isAdmin = userProfileData.role === 'admin'; 
             
-            // LƯU DỮ LIỆU CHUẨN HÓA
+            // LƯU DỮ LIỆU CHUẨN HÓA VÀO LOCAL STORAGE
             localStorage.setItem('currentUser', JSON.stringify(userProfileData));
+        } else {
+            // Trường hợp không có email trong userData (lỗi backend)
+            console.error("User data returned from backend is missing the email field.");
         }
     }
 }
