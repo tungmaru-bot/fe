@@ -210,7 +210,7 @@ export function logout() {
     // Tùy chọn: Chuyển hướng người dùng về trang Login
     // (Nếu bạn dùng router ở đây, bạn sẽ cần truyền router vào hàm này)
 }
-
+checkSession();
 // 5. Khởi tạo trạng thái khi ứng dụng load lần đầu
 checkAuthStatus();
-indow.addEventListener('storage', checkAuthStatus);
+window.addEventListener('storage', checkAuthStatus);
