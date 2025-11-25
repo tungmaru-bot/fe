@@ -14,7 +14,6 @@
             <div class="extra content">
                 <button class="ui primary button" @click="openProfileModal">Change Profile</button>
                 <button class="ui red button" @click="openPasswordModal">Change password</button>
-
             </div>
         </div>
     </div>
@@ -123,60 +122,71 @@
             </div>
         </div>
     </div>
-
 </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue'; // Thêm watch
 import { useRouter } from 'vue-router'; 
 
-import { authState, getUserLinks, deleteLinkFromDB, updateUserProfile} from '../authState'; 
+// Giả sử authState được import đúng từ '../authState'
+import { authState, getUserLinks, deleteLinkFromDB, updateUserProfile } from '../authState'; 
 import Swal from 'sweetalert2';
 
-const router = useRouter(); //khai báo router 
+const router = useRouter(); 
+
+// Dùng Optional Chaining (?) để tránh lỗi nếu currentUser là null
 const userName = computed(() => authState.currentUser?.name || 'Guest');
 const userEmail = computed(() => authState.currentUser?.email || 'No Email');
-// pull dữ liệu gốc 
-const linkHistory = ref([]);
 
-const ITEMS_PER_PAGE = 5;// cấu hình phân trang : mỗi tang 5 link
+const linkHistory = ref([]);
+const ITEMS_PER_PAGE = 5;
 const currentPage = ref(1);
 
-//cắt mảng dữ liệu theo trang 
 const paginatedHistory = computed(() => {
     const start = (currentPage.value - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
     return linkHistory.value.slice(start, end);
 });
 
-// tổng số trang
 const totalPages = computed(() => {
     return Math.ceil(linkHistory.value.length / ITEMS_PER_PAGE);
 });
-// chuyển trang 
+
 const changePage = (page) => {
     if (page >= 1 && page <= totalPages.value) {
         currentPage.value = page;
     }
 };
 
-//load dữ liệu từ database
+// *** ĐÃ SỬA: Thêm kiểm tra null cho authState.currentUser ***
 const loadRealData = () => {
-    if (authState.currentUser) {
+    // Chỉ thực hiện khi currentUser đã được gán giá trị
+    if (authState.currentUser?.id) { 
         const userLinks = getUserLinks(authState.currentUser.id);
         linkHistory.value = [...userLinks];
         linkHistory.value.reverse(); 
+    } else {
+        linkHistory.value = [];
     }
 };
 
+// *** THÊM WATCH: Lắng nghe sự thay đổi của authState.currentUser ***
+// Khi đăng nhập thành công, currentUser sẽ chuyển từ null sang object, 
+// và watch sẽ kích hoạt loadRealData.
+watch(() => authState.currentUser, (newVal) => {
+    if (newVal) {
+        loadRealData();
+    }
+}, { immediate: true }); // immediate: true để chạy loadRealData lần đầu khi component mount
+
 onMounted(() => {
-    loadRealData();
+    // Không cần gọi loadRealData() ở đây nữa vì đã có watch({ immediate: true })
 });
 
 
-
 const deleteLink = (id) => {
+    // ... (Giữ nguyên logic xóa link) ...
     Swal.fire({
         title: 'Delete link?',
         text: "You will not be able to restore it.!",
@@ -187,9 +197,9 @@ const deleteLink = (id) => {
     }).then((result) => {
         if (result.isConfirmed) {
             deleteLinkFromDB(id);
-            loadRealData();//tải dữ liệu mới 
-
-            if (paginatedHistory.value.length === 0 && currentPage.value > 1) {// lùi trang 
+            loadRealData();
+            
+            if (paginatedHistory.value.length === 0 && currentPage.value > 1) {
                 currentPage.value--;
             }
             
@@ -221,23 +231,26 @@ const openProfileModal = () => {
     isProfileModalOpen.value = true;
 };
 
-const openPasswordModal = () => {
-    currentPassword.value = '';
-    newPassword.value = '';
-    confirmNewPassword.value = '';
-    passwordMessage.value = '';
-    isPasswordModalOpen.value = true;
-};
+// ... (openPasswordModal giữ nguyên) ...
 
+// *** ĐÃ SỬA: Thêm kiểm tra null cho authState.currentUser ***
 const handleChangeProfile = async () => {
-    if (profileName.value.length < 4 || profileName.value.length > 16) {// kt đọ dài kí tự
+    // Thêm kiểm tra null trước khi truy cập id
+    if (!authState.currentUser || !authState.currentUser.id) {
+        profileMessage.value = 'User data not loaded. Please try refreshing.';
+        profileError.value = true;
+        return;
+    }
+
+    if (profileName.value.length < 4 || profileName.value.length > 16) {
         profileMessage.value = 'Name must be between 4 and 16 characters.';
-        profileError.value = true;// bắt đầu lưu
+        profileError.value = true;
         return;
     }
     isSavingProfile.value = true;
-    await new Promise(r => setTimeout(r, 500));// tạo độ trễ
+    await new Promise(r => setTimeout(r, 500));
 
+    // Truy cập id đã được kiểm tra ở trên
     const success = updateUserProfile(authState.currentUser.id, profileName.value);
 
     if (success) {
@@ -256,14 +269,24 @@ const handleChangeProfile = async () => {
     isSavingProfile.value = false;
 };
 
+// ... (handleChangePassword và copyToClipboard giữ nguyên) ...
+
+const openPasswordModal = () => {
+    currentPassword.value = '';
+    newPassword.value = '';
+    confirmNewPassword.value = '';
+    passwordMessage.value = '';
+    isPasswordModalOpen.value = true;
+};
+
 const handleChangePassword = async () => {
-    if(newPassword.value !== confirmNewPassword.value) {// so sánh mk mới và xác nhận mk ms
+    if(newPassword.value !== confirmNewPassword.value) {
         passwordMessage.value = 'Confirmation password does not match.';
         passwordError.value = true;
         return;
     }
-    isChangingPassword.value = true;//hiển thị trang thái xử lý
-    await new Promise(r => setTimeout(r, 800));// tạo đọ trễ 
+    isChangingPassword.value = true;
+    await new Promise(r => setTimeout(r, 800));
     passwordMessage.value = 'Password changed successfully !';
     passwordError.value = false;
     isChangingPassword.value = false;
@@ -271,7 +294,7 @@ const handleChangePassword = async () => {
 };
 
 const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);// gọi hàm sao chép
+    navigator.clipboard.writeText(text);
     Swal.fire({
         toast: true,
         position: 'top-end',
