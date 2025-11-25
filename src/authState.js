@@ -190,16 +190,21 @@ function checkAuthStatus() {
 }
 
 // 3. Hàm đăng nhập (Được gọi sau khi login thành công)
-export function setAuthToken(token, userPayload = null) { // Thêm userPayload tùy chọn
+export function setAuthToken(token, userData) { // Thêm userPayload tùy chọn
     if (token) {
         localStorage.setItem('token', token);
         localStorage.removeItem('currentUser'); // XÓA USER PASS KHI ĐĂNG NHẬP GOOGLE
-        
-        // Cập nhật trạng thái bằng đối tượng authState
         authState.isLoggedIn = true;
-        authState.currentUser = userPayload; 
-        // Logic Admin có thể cần phải decode token để kiểm tra role
-        // authState.isAdmin = (userPayload && userPayload.role === 'admin'); 
+        // Cập nhật trạng thái bằng đối tượng authState
+        // CẬP NHẬT THÔNG TIN USER (BƯỚC QUAN TRỌNG)
+        if (userData) {
+            // LƯU VÀO STATE REACTIVE
+            authState.currentUser = userData; 
+            authState.isAdmin = userData.role === 'admin'; 
+            
+            // LƯU VÀO LOCAL STORAGE ĐỂ COMPONENT USER PROFILE ĐỌC VÀ LƯU TRỮ LÂU DÀI
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+        }
     }
 }
 
