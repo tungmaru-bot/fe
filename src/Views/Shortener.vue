@@ -101,7 +101,7 @@ const handleSubmit = async () => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                longUrl: longUrl.value,
+                OriginalUrl: longUrl.value,
                 userId: userId
             })
         });
