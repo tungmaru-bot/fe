@@ -51,7 +51,7 @@ const handleSubmit = async () => {
     try {
         // Gửi yêu cầu POST đến Endpoint ForgotPassword
         const response = await axios.post(`${API_BASE_URL}/forgot-password`, {
-            email: email.value
+            Email: email.value
         });
         
         // Xử lý phản hồi thành công từ Backend
